@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unlimited Storyboard MVP</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 24px; max-width: 860px; }
+      input, select, textarea, button { width: 100%; margin: 6px 0 12px; padding: 8px; }
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      pre { background: #111; color: #eee; padding: 12px; border-radius: 8px; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <h1>Unlimited Storyboard MVP（No GPU）</h1>
+
+    <h3>1) 创建项目</h3>
+    <input id="projectName" placeholder="输入项目名，例如：我的第一个故事板" />
+    <button onclick="createProject()">创建项目</button>
+
+    <h3>2) 提交任务</h3>
+    <div class="row">
+      <div>
+        <label>Project ID</label>
+        <input id="projectId" placeholder="1" />
+      </div>
+      <div>
+        <label>Skill</label>
+        <select id="skillName"></select>
+      </div>
+    </div>
+    <textarea id="prompt" rows="4" placeholder="输入 prompt"></textarea>
+    <button onclick="createJob()">提交任务</button>
+
+    <h3>3) 查询任务</h3>
+    <input id="jobId" placeholder="输入 job id" />
+    <button onclick="getJob()">查询</button>
+
+    <pre id="out">等待操作...</pre>
+
+    <script>
+      const out = document.getElementById('out');
+      const skillSelect = document.getElementById('skillName');
+
+      async function api(url, options = {}) {
+        const res = await fetch(url, {
+          headers: { 'Content-Type': 'application/json' },
+          ...options,
+        });
+        if (!res.ok) {
+          throw new Error(await res.text());
+        }
+        return res.json();
+      }
+
+      async function loadSkills() {
+        const skills = await api('/api/skills');
+        skillSelect.innerHTML = skills
+          .map(s => `<option value="${s.name}">${s.label} (${s.name})</option>`)
+          .join('');
+      }
+
+      async function createProject() {
+        try {
+          const data = await api('/api/projects', {
+            method: 'POST',
+            body: JSON.stringify({ name: document.getElementById('projectName').value || 'Untitled Project' }),
+          });
+          document.getElementById('projectId').value = data.id;
+          out.textContent = JSON.stringify(data, null, 2);
+        } catch (e) {
+          out.textContent = String(e);
+        }
+      }
+
+      async function createJob() {
+        try {
+          const data = await api('/api/jobs', {
+            method: 'POST',
+            body: JSON.stringify({
+              project_id: Number(document.getElementById('projectId').value),
+              skill_name: document.getElementById('skillName').value,
+              prompt: document.getElementById('prompt').value,
+            }),
+          });
+          document.getElementById('jobId').value = data.id;
+          out.textContent = JSON.stringify(data, null, 2);
+        } catch (e) {
+          out.textContent = String(e);
+        }
+      }
+
+      async function getJob() {
+        try {
+          const data = await api(`/api/jobs/${document.getElementById('jobId').value}`);
+          out.textContent = JSON.stringify(data, null, 2);
+        } catch (e) {
+          out.textContent = String(e);
+        }
+      }
+
+      loadSkills().catch(e => (out.textContent = String(e)));
+    </script>
+  </body>
+</html>

@@ -1,0 +1,16 @@
+[project]
+name = "unlimited-storyboard-mvp"
+version = "0.1.0"
+description = "MVP for an infinite-canvas AI orchestration backend without self-hosted GPU"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.116.0",
+  "uvicorn[standard]>=0.35.0",
+  "sqlmodel>=0.0.24",
+  "pydantic>=2.11.0",
+  "python-multipart>=0.0.20"
+]
+
+[tool.uv]
+package = false
